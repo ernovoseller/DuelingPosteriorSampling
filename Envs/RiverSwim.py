@@ -20,25 +20,26 @@ class RiverSwimEnv(gym.Env):
     
     def __init__(self, num_states = 6):
         """
+        Constructor for the RiverSwim environment class.        
         Input: num_states = number of states in the MDP.
         """
         
         # Initialize state and action spaces.
-        self.nA = 2     # Actions: left and right
+        self.nA = 2     # Two actions: left and right
         self.action_space = spaces.Discrete(self.nA)
         self.observation_space = spaces.Discrete(num_states)
         self.nS = num_states
         
-        self.states_per_dim = [num_states]  # Only one dimension
+        self.states_per_dim = [num_states]  # State space has only one dimension
         self.store_episode_reward = False   # Track rewards at each step, not
                                             # over whole episode
-        self.done = False                   # This stays false, since an episode
-                                            # only finishes at its time horizon.
+        self.done = False                   # This stays false: in this 
+        # environment, an episode can only finish at the episode time horizon.
         
         self._seed()
-        
-        # Store transition probability matrix and rewards.
-        # self.P[s][a] is a list of transition tuples (prob, next_state, reward)
+
+        # Construct transition probability matrix and rewards. Format:
+        # self.P[s][a] is a list of transition tuples (prob, next_state, reward).
         self.P = {}
         
         for s in range(self.nS):
@@ -81,7 +82,11 @@ class RiverSwimEnv(gym.Env):
     def step(self, action):
         return self._step(action)
     
-    def _reset(self): # We always start at the leftmost state.
+    def _reset(self):
+        """
+        Reset initial state, so that we can start a new episode. Always start
+        in the leftmost state.
+        """
         
         self.state = 0
         return self.state
@@ -109,8 +114,8 @@ class RiverSwimEnv(gym.Env):
     
     def get_step_reward(self, state, action, next_state):
         """
-        Return the reward associated with a specific action from a state-action 
-        pair, and the resulting next state.
+        Return the reward corresponding to the given state, action and 
+        subsequent state.
         """
     
         transition_probs = self.P[state][action]
@@ -129,7 +134,9 @@ class RiverSwimEnv(gym.Env):
     def get_trajectory_return(self, tr):
         """
         Return the total reward accrued in a particular trajectory.
-        """        
+        Format of inputted trajectory: [[s1, s2, ..., sH], [a1, a2, ..., aH]]
+        """    
+        
         states = tr[0]
         actions = tr[1]
         
@@ -151,20 +158,22 @@ class RiverSwimEnv(gym.Env):
       
 class RiverSwimPreferenceEnv(RiverSwimEnv):
     """
-    This class extends the RiverSwim environment to handle trajectory-
-    preference feedback.
+    This class is a wrapper for the RiverSwim environment, which gives
+    preferences over trajectories instead of absolute feedback.
     
-    The following changes are made to the RiverSwimEnv class defined above:
-        1) Step function no longer returns reward feedback.
-        2) Add a function that calculates a preference between 2 inputted
+    The following extensions are made to the RiverSwimEnv class defined above:
+        1) The step function no longer returns reward feedback.
+        2) We add a function that calculates a preference between 2 inputted
             trajectories.
     """
 
-    def __init__(self, num_states = 6, user_noise_model):
+    def __init__(self, user_noise_model, num_states = 6):
         """
-        user_noise_model specifies the degree of noisiness in the generated 
-        preferences. See description of the function get_trajectory_preference
-        for details.
+        Arguments:
+            1) user_noise_model: specifies the degree of noisiness in the 
+                   generated preferences. See description of the function 
+                   get_trajectory_preference for details.
+            2) num_states: number of states in the MDP.
         """
         
         self.user_noise_model = user_noise_model

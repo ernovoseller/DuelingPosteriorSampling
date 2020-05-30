@@ -14,24 +14,42 @@ import numpy as np
 
 
 class RandomMDPEnv(gym.Env):
-
+    """
+    This class defines the Random MDP environment.
+    """
     
     def __init__(self, num_states = 10, num_actions = 5,
-                 lambd = 5, transition_arg = [], reward_arg = [],
-                 P0_arg = [], diri_prior = 1):
+                 lambd = 5, diri_prior = 1, transition_arg = [], 
+                 reward_arg = [], P0_arg = []):
         """
-        Sample a Random MDP to define the environment.
+        The constructor samples a random MDP (rewards, dynamics, and initial
+        state distribution) from the prior to define the environment.
+        Alternatively, the MDP parameters can be passed in as arguments,
+        rather than sampled randomly; this is meant to allow for sampling the
+        random MDPs and saving them, so that the same set of random MDPs can
+        be repeatedly re-used.
         
         Arguments:
-            1) Number of states in the MDP
-            2) Number of actions in the MDP
-            3) Prior parameters for exponential dist. (for sampling the rewards)
-            4) & 5) Transition probability and reward matrices; if passed in, then
-                use these instead of generating them randomly.
-            6) Initial state probability vector; if passed in, then use instead
-                of generating randomly.
-            7) Dirichlet prior parameter for sampling the state/action 
-               transition probabilities.
+            1) num_states: number of states in the MDP
+            2) num_actions: number of actions in the MDP
+            3) lambd: parameter for exponential distribution; this is used for
+               sampling the rewards
+            4) diri_prior: Dirichlet prior parameter for sampling the 
+               state/action transition probabilities and initial state 
+               distribution.
+            5) transition_arg: transition probabilities; if passed in, then
+                use these instead of generating them randomly. Matrix of size
+               (num_states, num_actions, num_states), in which element
+               [s, a, s_next] is the probability of transitioning to state 
+               s_next when taking action a in state s.
+            6) reward_arg: reward matrices; if passed in, then use this instead
+               of generating them randomly. Matrix of size (num_states, 
+               num_actions, num_states), in which rewards[s, a, s_next] is 
+               the reward when taking action a in state s and transitioning to
+               state s_next.
+            7) P0_arg: initial state probability vector; if passed in, then use 
+               this instead of generating it randomly. Vector of length 
+               num_states.
         """
         
         # Initialize state and action spaces.
@@ -40,11 +58,11 @@ class RandomMDPEnv(gym.Env):
         self.nS = num_states
         self.observation_space = spaces.Discrete(self.nS)
         
-        self.states_per_dim = [num_states]  # Only one dimension
+        self.states_per_dim = [num_states]  # State space has only one dimension
         self.store_episode_reward = False   # Track rewards at each step, not
                                             # over whole episode
-        self.done = False                   # This stays false, since an episode
-                                            # only finishes at its time horizon.
+        self.done = False                   # This stays false: in this 
+        # environment, an episode can only finish at the episode time horizon.
         
         self._seed()
         
@@ -74,7 +92,7 @@ class RandomMDPEnv(gym.Env):
             else:
                 print('Error: not using inputted reward information.')
         
-        # Sample rewards, if not inputted:
+        # Sample rewards from exponential distribution, if not inputted:
         if not reward_passed:
             
             rewards = np.random.exponential(lambd, 
@@ -87,9 +105,10 @@ class RandomMDPEnv(gym.Env):
         else:
             rewards = reward_arg
                     
-        # Create transition probability matrix.
-        # self.P[s][a] is a list of transition tuples (prob, next_state, reward)
-        # Prior for Dirichlet model (for sampling the dynamics):
+        # Construct transition probability matrix and rewards. Format:
+        # self.P[s][a] is a list of transition tuples (prob, next_state, reward).
+        
+        # Dirichlet distribution to use for sampling the dynamics parameters:
         dirichlet_prior = diri_prior * np.ones(num_states)
 
         self.P = {}
@@ -100,10 +119,11 @@ class RandomMDPEnv(gym.Env):
             
             for a in range(self.nA):
                 
-                # Sample transition dynamics:
+                # If transition dynamics were passed in as an argument, then 
+                # use those:
                 if transition_passed:
                     transition_probs = transition_arg[s, a, :]
-                else:
+                else:     # Otherwise, sample transition dynamics:
                     transition_probs = np.random.dirichlet(dirichlet_prior)
                 
                 for s_next in range(self.nS):
@@ -111,13 +131,13 @@ class RandomMDPEnv(gym.Env):
                     self.P[s][a].append((transition_probs[s_next], 
                             s_next, rewards[s, a, s_next]))
 
-        # Sample initial state distribution:
+        # Sample initial state distribution (or use inputted values, if given):
         if not init_prob_passed:
             self.P0 = np.random.dirichlet(dirichlet_prior)
         else:
             self.P0 = P0_arg
 
-        # Start the first game
+        # Reset the starting state:
         self._reset()
         
     def _seed(self, seed=None):
@@ -131,6 +151,10 @@ class RandomMDPEnv(gym.Env):
         return self._step(action)
     
     def _reset(self):   # Draw a sample from the initial state distribution.
+        """
+        Reset initial state, so that we can start a new episode. Sample from
+        the initial state distribution.
+        """
         
         outcome = np.random.choice(np.arange(self.nS), p = self.P0)
         
@@ -160,8 +184,8 @@ class RandomMDPEnv(gym.Env):
 
     def get_step_reward(self, state, action, next_state):
         """
-        Take a step using the transition probability matrix specified in the 
-        constructor.
+        Return the reward corresponding to the given state, action and 
+        subsequent state.
         """
         
         transition_probs = self.P[state][action]
@@ -180,7 +204,8 @@ class RandomMDPEnv(gym.Env):
     def get_trajectory_return(self, tr):
         """
         Return the total reward accrued in a particular trajectory.
-        """
+        Format of inputted trajectory: [[s1, s2, ..., sH], [a1, a2, ..., aH]]
+        """  
             
         states = tr[0]
         actions = tr[1]
@@ -202,36 +227,31 @@ class RandomMDPEnv(gym.Env):
 
 class RandomMDPPreferenceEnv(RandomMDPEnv):
     """
-    This class extends the RandomMDP environment to handle trajectory-
-    preference feedback.
+    This class is a wrapper for the Random MDP environment, which gives
+    preferences over trajectories instead of absolute feedback.
     
     The following changes are made to the RandomMDPEnv class defined above:
-        1) Step function no longer returns reward feedback.
-        2) Add a function that calculates a preference between 2 inputted
+        1) The step function no longer returns reward feedback.
+        2) We add a function that calculates a preference between 2 inputted
             trajectories.
 
     """
 
-    def __init__(self, user_noise_model, num_states = 10, num_actions = 5, 
-                 NG_prior = [1, 1, 1, 1], transition_arg = [], reward_arg = [],
-                 P0_arg = []):
+    def __init__(self, user_noise_model, num_states = 10, num_actions = 5,
+                 lambd = 5, diri_prior = 1, transition_arg = [], 
+                 reward_arg = [], P0_arg = []):
 
         """       
         Arguments:
             1) user_noise_model: specifies the degree of noisiness in the 
                    generated preferences. See description of the function 
                    get_trajectory_preference for details.
-            2) Number of states
-            3) Number of actions
-            4) Prior parameters for normal-gamma model (for sampling the rewards)
-            5) & 6) Transition probability and reward matrices; if passed in, then
-                use these instead of generating them randomly.
-            7) Initial state probability vector; if passed in, then use instead
-                of generating randomly.
+            2-8) Identical to the arguments in the constructor of 
+                 RandomMDPEnv above.
         """
     
-        super().__init__(num_states, num_actions, NG_prior, transition_arg,
-             reward_arg, P0_arg)
+        super().__init__(num_states, num_actions, lambd, diri_prior, 
+             transition_arg, reward_arg, P0_arg)
         
         self.user_noise_model = user_noise_model
 
