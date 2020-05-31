@@ -15,7 +15,7 @@ import numpy as np
 
 class RiverSwimEnv(gym.Env):
     """
-    This class defines the RiverSwim MDP environment.
+    This class defines the RiverSwim environment.
     """
     
     def __init__(self, num_states = 6):
@@ -159,7 +159,7 @@ class RiverSwimEnv(gym.Env):
 class RiverSwimPreferenceEnv(RiverSwimEnv):
     """
     This class is a wrapper for the RiverSwim environment, which gives
-    preferences over trajectories instead of absolute feedback.
+    preferences over trajectories instead of numerical rewards at each step.
     
     The following extensions are made to the RiverSwimEnv class defined above:
         1) The step function no longer returns reward feedback.
@@ -192,13 +192,13 @@ class RiverSwimPreferenceEnv(RiverSwimEnv):
    
     def get_trajectory_preference(self, tr1, tr2):
         """
-        Return a preference between two given state-action trajectories, tr1 and 
-        tr2.
+        Return a preference between two given trajectories of states and 
+        actions, tr1 and tr2.
         
         Format of inputted trajectories: [[s1, s2, ..., sH], [a1, a2, ..., aH]]
         
         Preference information: 0 = trajectory 1 preferred; 1 = trajectory 2 
-        preferred; 0.5 = trajectories preferred equally.
+        preferred; 0.5 = trajectories preferred equally (i.e., a tie).
         
         Preferences are determined by comparing the rewards accrued in the 2 
         trajectories.
@@ -207,10 +207,10 @@ class RiverSwimPreferenceEnv(RiverSwimEnv):
         
         noise_type should be equal to 0, 1, or 2.
         noise_type = 0: deterministic preference; return 0.5 if tie.
-        noise_type = 1: logistic noise model; user_noise parameter determines degree
-        of noisiness.
-        noise_type = 2: linear noise model; user_noise parameter determines degree
-        of noisiness
+        noise_type = 1: logistic noise model; user_noise parameter determines 
+        degree of noisiness.
+        noise_type = 2: linear noise model; user_noise parameter determines 
+        degree of noisiness
         
         noise_param is not used if noise_type = 0. Otherwise, smaller values
         correspond to noisier preferences.
@@ -224,7 +224,8 @@ class RiverSwimPreferenceEnv(RiverSwimEnv):
         trajectories = [tr1, tr2]
         num_traj = len(trajectories)
         
-        returns = np.empty(num_traj)  # Will store cumulative returns for the 2 trajectories
+        # For both trajectories, determine cumulative reward / total return:
+        returns = np.empty(num_traj)
         
         # Get cumulative reward for each trajectory
         for i in range(num_traj):
@@ -233,7 +234,7 @@ class RiverSwimPreferenceEnv(RiverSwimEnv):
             
         if noise_type == 0:  # Deterministic preference:
             
-            if returns[0] == returns[1]:  # Compare returns to determine the preference
+            if returns[0] == returns[1]:  # Compare returns to determine preference
                 preference = 0.5
             elif returns[0] > returns[1]:
                 preference = 0

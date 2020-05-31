@@ -26,8 +26,8 @@ class RandomMDPEnv(gym.Env):
         state distribution) from the prior to define the environment.
         Alternatively, the MDP parameters can be passed in as arguments,
         rather than sampled randomly; this is meant to allow for sampling the
-        random MDPs and saving them, so that the same set of random MDPs can
-        be repeatedly re-used.
+        random MDPs once and saving them, so that the same set of random MDPs 
+        can be repeatedly re-used.
         
         Arguments:
             1) num_states: number of states in the MDP
@@ -38,17 +38,17 @@ class RandomMDPEnv(gym.Env):
                state/action transition probabilities and initial state 
                distribution.
             5) transition_arg: transition probabilities; if passed in, then
-                use these instead of generating them randomly. Matrix of size
+               use these instead of generating them randomly. Matrix of size
                (num_states, num_actions, num_states), in which element
                [s, a, s_next] is the probability of transitioning to state 
                s_next when taking action a in state s.
-            6) reward_arg: reward matrices; if passed in, then use this instead
-               of generating them randomly. Matrix of size (num_states, 
+            6) reward_arg: reward values; if passed in, then use this instead
+               of generating rewards randomly. Array of size (num_states, 
                num_actions, num_states), in which rewards[s, a, s_next] is 
                the reward when taking action a in state s and transitioning to
                state s_next.
             7) P0_arg: initial state probability vector; if passed in, then use 
-               this instead of generating it randomly. Vector of length 
+               this instead of generating it randomly. Array of length 
                num_states.
         """
         
@@ -150,22 +150,22 @@ class RandomMDPEnv(gym.Env):
     def step(self, action):
         return self._step(action)
     
-    def _reset(self):   # Draw a sample from the initial state distribution.
+    def _reset(self):
         """
         Reset initial state, so that we can start a new episode. Sample from
         the initial state distribution.
         """
         
-        outcome = np.random.choice(np.arange(self.nS), p = self.P0)
+        initial_state = np.random.choice(np.arange(self.nS), p = self.P0)
         
-        self.state = outcome
+        self.state = initial_state
         return self.state
     
 
     def _step(self, action):
         """
         Take a step using the transition probability matrix specified in the 
-        constructor.
+        constructor, using the given action.
         """
         
         transition_probs = self.P[self.state][action]
@@ -228,7 +228,7 @@ class RandomMDPEnv(gym.Env):
 class RandomMDPPreferenceEnv(RandomMDPEnv):
     """
     This class is a wrapper for the Random MDP environment, which gives
-    preferences over trajectories instead of absolute feedback.
+    preferences over trajectories instead of numerical rewards at each step.
     
     The following changes are made to the RandomMDPEnv class defined above:
         1) The step function no longer returns reward feedback.
@@ -268,13 +268,13 @@ class RandomMDPPreferenceEnv(RandomMDPEnv):
 
     def get_trajectory_preference(self, tr1, tr2):
         """
-        Return a preference between two given state-action trajectories, tr1 and 
-        tr2.
+        Return a preference between two given trajectories of states and 
+        actions, tr1 and tr2.
         
         Format of inputted trajectories: [[s1, s2, ..., sH], [a1, a2, ..., aH]]
         
         Preference information: 0 = trajectory 1 preferred; 1 = trajectory 2 
-        preferred; 0.5 = trajectories preferred equally.
+        preferred; 0.5 = trajectories preferred equally (i.e., a tie).
         
         Preferences are determined by comparing the rewards accrued in the 2 
         trajectories.
@@ -283,10 +283,10 @@ class RandomMDPPreferenceEnv(RandomMDPEnv):
         
         noise_type should be equal to 0, 1, or 2.
         noise_type = 0: deterministic preference; return 0.5 if tie.
-        noise_type = 1: logistic noise model; user_noise parameter determines degree
-        of noisiness.
-        noise_type = 2: linear noise model; user_noise parameter determines degree
-        of noisiness
+        noise_type = 1: logistic noise model; user_noise parameter determines 
+        degree of noisiness.
+        noise_type = 2: linear noise model; user_noise parameter determines 
+        degree of noisiness
         
         noise_param is not used if noise_type = 0. Otherwise, smaller values
         correspond to noisier preferences.
@@ -300,7 +300,8 @@ class RandomMDPPreferenceEnv(RandomMDPEnv):
         trajectories = [tr1, tr2]
         num_traj = len(trajectories)
         
-        returns = np.empty(num_traj)  # Will store cumulative returns for the 2 trajectories
+        # For both trajectories, determine cumulative reward / total return:
+        returns = np.empty(num_traj)
         
         # Get cumulative reward for each trajectory
         for i in range(num_traj):
@@ -309,7 +310,7 @@ class RandomMDPPreferenceEnv(RandomMDPEnv):
             
         if noise_type == 0:  # Deterministic preference:
             
-            if returns[0] == returns[1]:  # Compare returns to determine the preference
+            if returns[0] == returns[1]:  # Compare returns to determine preference
                 preference = 0.5
             elif returns[0] > returns[1]:
                 preference = 0
