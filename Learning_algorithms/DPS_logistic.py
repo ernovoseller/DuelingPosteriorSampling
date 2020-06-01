@@ -8,7 +8,7 @@ import numpy as np
 from collections import defaultdict
 from scipy.optimize import minimize
 
-from DPS_helper_functions import advance, get_state_action_visit_counts
+from Learning_algorithms.DPS_helper_functions import advance, get_state_action_visit_counts
 
 
 def DPS_log_reg(time_horizon, hyper_params, env, num_iter, diri_prior = 1, 
@@ -123,7 +123,7 @@ def DPS_log_reg(time_horizon, hyper_params, env, num_iter, diri_prior = 1,
                 
                 action = np.random.choice(num_actions, p = policy[t, state, :])
                 
-                next_state, _, _ = env.step(action)
+                next_state, done = env.step(action)
                 
                 state_sequence[t] = state
                 action_sequence[t] = action
@@ -136,7 +136,7 @@ def DPS_log_reg(time_horizon, hyper_params, env, num_iter, diri_prior = 1,
                     reward_count += 1
 
                 # Terminate trajectory if environment turns on "done" flag.
-                if env.done:
+                if done:
                     state_sequence = state_sequence[: t + 2]
                     action_sequence = action_sequence[: t + 1]
                     

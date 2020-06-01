@@ -329,7 +329,7 @@ def EPMC(time_horizon, hyper_params, env, num_iter, run_str = '', seed = None):
                     
                     action = np.argmax(determ_policy[state, :])
                 
-                next_state, _, _ = env.step(action)
+                next_state, done = env.step(action)
                 
                 state_sequence[t] = state
                 action_sequence[t] = action
@@ -342,7 +342,7 @@ def EPMC(time_horizon, hyper_params, env, num_iter, run_str = '', seed = None):
                     reward_count += 1
 
                 # Terminate trajectory if environment turns on "done" flag.
-                if env.done:
+                if done:
                     state_sequence = state_sequence[: t + 2]
                     action_sequence = action_sequence[: t + 1]
                     

@@ -70,19 +70,13 @@ class RiverSwimEnv(gym.Env):
                           (0.35, s + 1, 0)]
 
         # Reset the starting state:
-        self._reset()
+        self.reset()
         
     def _seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
         return [seed]
     
     def reset(self):
-        return self._reset()
-    
-    def step(self, action):
-        return self._step(action)
-    
-    def _reset(self):
         """
         Reset initial state, so that we can start a new episode. Always start
         in the leftmost state.
@@ -91,7 +85,7 @@ class RiverSwimEnv(gym.Env):
         self.state = 0
         return self.state
     
-    def _step(self, action):
+    def step(self, action):
         """
         Take a step using the transition probability matrix specified in the 
         constructor.
@@ -178,15 +172,15 @@ class RiverSwimPreferenceEnv(RiverSwimEnv):
         
         self.user_noise_model = user_noise_model
         
-        super().__init__(num_states)        # RiverSwimPreferenceEnv, self
+        super().__init__(num_states)
 
-    def _step(self, action):
+    def step(self, action):
         """
         Take a step using the transition probability matrix specified in the 
         constructor. This is identical to the RiverSwim class, except that now 
         we no longer return the reward.
         """
-        state, _, done = super()._step(action)    # RiverSwimPreferenceEnv, self
+        state, _, done = super().step(action)
         return state, done
        
    
@@ -217,7 +211,7 @@ class RiverSwimPreferenceEnv(RiverSwimEnv):
         """          
         
         # Unpack self.user_noise_model:
-        noise_type, noise_param = self.user_noise_model
+        noise_param, noise_type = self.user_noise_model
 
         assert (noise_type in [0,1,2]), "noise_type %i invalid" % noise_type
         

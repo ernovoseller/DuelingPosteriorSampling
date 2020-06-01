@@ -14,7 +14,7 @@ from collections import defaultdict
 import sys
 if "../" not in sys.path:
   sys.path.append("../") 
-from Lib.ValueIteration import value_iteration
+from ValueIteration import value_iteration
 
 
 def PSRL(time_horizon, NG_prior_params, env, num_iter, diri_prior = 1,
@@ -110,7 +110,7 @@ def PSRL(time_horizon, NG_prior_params, env, num_iter, diri_prior = 1,
                 
                 action = np.random.choice(num_actions, p = policy[t, state, :])
                 
-                next_state, reward, _, = env.step(action)
+                next_state, reward, done, = env.step(action)
 
                 # Update state transition posterior:
                 dirichlet_posterior[state][action][next_state] += 1
@@ -129,7 +129,7 @@ def PSRL(time_horizon, NG_prior_params, env, num_iter, diri_prior = 1,
                     reward_count += 1
 
                 # Terminate trajectory if environment turns on "done" flag.
-                if env.done:
+                if done:
                     break   
 
                 state = next_state    

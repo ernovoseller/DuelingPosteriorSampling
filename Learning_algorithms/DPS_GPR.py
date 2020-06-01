@@ -8,7 +8,8 @@ import numpy as np
 from collections import defaultdict
 import itertools
 
-from DPS_helper_functions import advance, get_state_action_visit_counts
+
+from Learning_algorithms.DPS_helper_functions import advance, get_state_action_visit_counts
 
 
 def DPS_GPR(time_horizon, hyper_params, env, num_iter, diri_prior = 1, 
@@ -82,7 +83,7 @@ def DPS_GPR(time_horizon, hyper_params, env, num_iter, diri_prior = 1,
     # in input 4) in the large comment at the top of this function.
     if np.isscalar(kernel_lengthscales):
         kernel_lengthscales = kernel_lengthscales * np.ones(len(states_per_dim))
-        kernel_lengthscales = np.concatenate(kernel_lengthscales, [0])
+        kernel_lengthscales = np.concatenate((kernel_lengthscales, [0]))
     
     GP_prior_cov = kernel_variance * np.ones((num_sa_pairs, num_sa_pairs))
 
@@ -167,7 +168,7 @@ def DPS_GPR(time_horizon, hyper_params, env, num_iter, diri_prior = 1,
                 
                 action = np.random.choice(num_actions, p = policy[t, state, :])
                 
-                next_state, _, _ = env.step(action)
+                next_state, done = env.step(action)
                 
                 state_sequence[t] = state
                 action_sequence[t] = action
@@ -180,7 +181,7 @@ def DPS_GPR(time_horizon, hyper_params, env, num_iter, diri_prior = 1,
                     reward_count += 1
 
                 # Terminate trajectory if environment turns on "done" flag.
-                if env.done:
+                if done:
                     state_sequence = state_sequence[: t + 2]
                     action_sequence = action_sequence[: t + 1]
                     
@@ -266,7 +267,7 @@ def feedback_GPR(GP_prior, observation_matrix, preference_labels,
     prior_mean = GP_prior['mean']
     prior_cov = GP_prior['cov']
 
-    num_samples = len(preference_labels)   # Number of data points so far
+    num_samples, num_sa_pairs = observation_matrix.shape
             
     # Calculate the posterior mean:
     K_rR = prior_cov @ np.transpose(observation_matrix)
@@ -278,7 +279,8 @@ def feedback_GPR(GP_prior, observation_matrix, preference_labels,
         (preference_labels.flatten() - observation_matrix @ prior_mean)
     
     # Calculate the posterior covariance matrix:
-    post_cov = prior_cov - intermediate_term @ np.transpose(K_rR)
+    post_cov = prior_cov - intermediate_term @ np.transpose(K_rR) \
+                 + 1e-7 * np.eye(num_sa_pairs)
 
     # Eigenvectors and eigenvalues of the covariance matrix:
     evals, evecs = np.linalg.eigh(post_cov)

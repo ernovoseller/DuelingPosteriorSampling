@@ -138,19 +138,13 @@ class RandomMDPEnv(gym.Env):
             self.P0 = P0_arg
 
         # Reset the starting state:
-        self._reset()
+        self.reset()
         
     def _seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
         return [seed]
     
     def reset(self):
-        return self._reset()
-    
-    def step(self, action):
-        return self._step(action)
-    
-    def _reset(self):
         """
         Reset initial state, so that we can start a new episode. Sample from
         the initial state distribution.
@@ -162,7 +156,7 @@ class RandomMDPEnv(gym.Env):
         return self.state
     
 
-    def _step(self, action):
+    def step(self, action):
         """
         Take a step using the transition probability matrix specified in the 
         constructor, using the given action.
@@ -256,13 +250,13 @@ class RandomMDPPreferenceEnv(RandomMDPEnv):
         self.user_noise_model = user_noise_model
 
 
-    def _step(self, action):
+    def step(self, action):
         """
         Take a step using the transition probability matrix specified in the 
         constructor. This is identical to the RandomMDP class, except that now 
         we no longer return the reward.
         """
-        state, _, done = super()._step(action)    # RandomMDPPreferenceEnv, self
+        state, _, done = super().step(action)    # RandomMDPPreferenceEnv, self
         return state, done
        
 
@@ -293,7 +287,7 @@ class RandomMDPPreferenceEnv(RandomMDPEnv):
         """          
         
         # Unpack self.user_noise_model:
-        noise_type, noise_param = self.user_noise_model
+        noise_param, noise_type = self.user_noise_model
 
         assert (noise_type in [0,1,2]), "noise_type %i invalid" % noise_type
         

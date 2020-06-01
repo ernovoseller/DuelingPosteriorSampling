@@ -16,4 +16,10 @@ including via Gaussian process regression, Bayesian linear regression, and a Gau
 model (for which Bayesian logistic regression is a special case).
 
 In the paper, we prove an asymptotic Bayesian no-regret rate for DPS with a Bayesian linear regression
-credit assignment model. To our knowledge, this is the first regret guarantee for preference-based RL. 
+credit assignment model. To our knowledge, this is the first regret guarantee for preference-based RL.
+
+## Implementation Notes
+
+The DPS code and baseline algorithms can all be found in the "Learning_algorithms/" folder. Simulation environments are located in the "Envs/" folder. Finally, the scripts DPS_GPR_in_RiverSwim.py, and DPS_linear_in_RiverSwim.py demonstrate executing the DPS algorithm (with the Gaussian process regression and Bayesian linear regression credit assignment models, respectively) in the RiverSwim environment.
+
+ 

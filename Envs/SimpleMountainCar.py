@@ -95,7 +95,7 @@ class SimpleMountainCarEnv(gym.Env):
         # Update state:
         self.state = (position, velocity)
 
-        return np.array(self.state), reward
+        return np.array(self.state), reward, self.done
 
 
     def reset(self, start_state = None):
@@ -172,12 +172,12 @@ class SimpleMountainCarDiscEnv(SimpleMountainCarEnv):
         Returns: 1) discretized state, 2) reward
 
         """   
-        state, reward = super().step(action)
+        state, reward, done = super().step(action)
 
         # Convert to discretized state:
         state = self.convert_state_values_to_state_idx(state[0], self.thresholds)
         
-        return state, reward
+        return state, reward, done
 
 
     def convert_state_values_to_state_idx(state, thresholds):
@@ -243,9 +243,9 @@ class SimpleMountainCarPreferenceEnv(SimpleMountainCarDiscEnv):
         identical to the parent class, except that now, we no longer return the 
         reward.
         """
-        _, reward = super().step(action)
+        state, _, done = super().step(action)
 
-        return self.state
+        return state, done
 
     def reset(self, start_state = None):
 
@@ -292,7 +292,7 @@ class SimpleMountainCarPreferenceEnv(SimpleMountainCarDiscEnv):
         """          
         
         # Unpack self.user_noise_model:
-        noise_type, noise_param = self.user_noise_model
+        noise_param, noise_type = self.user_noise_model
 
         assert (noise_type in [0,1,2]), "noise_type %i invalid" % noise_type
         
