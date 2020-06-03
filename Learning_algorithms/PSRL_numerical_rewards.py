@@ -100,7 +100,7 @@ def PSRL(time_horizon, NG_prior_params, env, num_iter, diri_prior = 1,
  
         # Sample policies:
         policies, reward_models = advance(num_policies, dirichlet_posterior, 
-                        NG_params, num_states, num_actions, time_horizon)
+                        num_states, num_actions, NG_params, time_horizon)
             
         for policy in policies:    # Roll out an action sequence
     

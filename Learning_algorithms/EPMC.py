@@ -272,6 +272,9 @@ def EPMC(time_horizon, hyper_params, env, num_iter, run_str = '', seed = None):
     # Unpack hyperparameters:
     [alpha, eta] = hyper_params
     
+    # Print status:
+    print('EPMC: ' + run_str)
+    
     # Numbers of states and actions in the environment:
     num_states = env.nS
     num_actions = env.nA
