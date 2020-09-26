@@ -145,12 +145,12 @@ def DPS_lin_reg(time_horizon, hyper_params, env, num_iter, diri_prior = 1,
             state_sequence[-1] = next_state
             trajectories.append([state_sequence, action_sequence]) 
 
-        # Tracking rewards for evaluation purposes (in case of tracking
-        # rewards just over entire episodes):
-        if env.store_episode_reward:
-
-            rewards[reward_count] = env.get_episode_return()
-            reward_count += 1
+            # Tracking rewards for evaluation purposes (in case of tracking
+            # rewards just over entire episodes):
+            if env.store_episode_reward:
+    
+                rewards[reward_count] = env.get_episode_return()
+                reward_count += 1
             
         # Obtain a preference between the 2 trajectories:
         preference = env.get_trajectory_preference(trajectories[0], 
