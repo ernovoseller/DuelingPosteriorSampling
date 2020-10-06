@@ -200,7 +200,7 @@ def DPS_GP_preference(time_horizon, hyper_params, env, num_iter, diri_prior = 1,
             # rewards just over entire episodes):
             if env.store_episode_reward:
     
-                rewards[reward_count] = env.get_episode_return()
+                rewards[reward_count] = env.get_trajectory_return()
                 reward_count += 1
             
         # Obtain a preference between the 2 trajectories:

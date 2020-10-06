@@ -154,10 +154,10 @@ class SimpleMountainCarDiscEnv(SimpleMountainCarEnv):
         state to a discretized state.
         """
 
-        state = super().reset(start_state)[0]
+        state = super().reset(start_state)
 
         # Convert to discretized state:
-        return self.convert_state_values_to_state_idx(state, self.thresholds)
+        return self.convert_state_values_to_state_idx(state)
 
 
     def step(self, action):
@@ -175,12 +175,12 @@ class SimpleMountainCarDiscEnv(SimpleMountainCarEnv):
         state, reward, done = super().step(action)
 
         # Convert to discretized state:
-        state = self.convert_state_values_to_state_idx(state[0], self.thresholds)
+        state = self.convert_state_values_to_state_idx(state)
         
         return state, reward, done
 
 
-    def convert_state_values_to_state_idx(state, thresholds):
+    def convert_state_values_to_state_idx(self, state):
         """
         This function converts the state into a discretized state (with bins 
         defined according to the given thresholds). Then, it returns the 
@@ -199,12 +199,12 @@ class SimpleMountainCarDiscEnv(SimpleMountainCarEnv):
         """
     
         # Convert to integer bins:
-        num_dims = len(thresholds)
+        num_dims = len(self.thresholds)
         state_bins = np.empty(num_dims)
     
         for i in range(num_dims):
     
-            state_bins[i] = np.where(state[i] >= thresholds[i])[0][-1]
+            state_bins[i] = np.where(state[i] >= self.thresholds[i])[0][-1]
     
         # Convert to the state's scalar index:
         state_idx = 0
@@ -213,7 +213,7 @@ class SimpleMountainCarDiscEnv(SimpleMountainCarEnv):
         for i in range(num_dims - 1, -1, -1):
     
             state_idx += state_bins[i] * prod
-            prod *= len(thresholds[i])
+            prod *= len(self.thresholds[i])
     
         return int(state_idx)
 
@@ -249,8 +249,8 @@ class SimpleMountainCarPreferenceEnv(SimpleMountainCarDiscEnv):
 
     def reset(self, start_state = None):
 
-        super().reset(start_state)
-        return self.state
+        state = super().reset(start_state)
+        return state
 
 
     def get_trajectory_return(self, tr):

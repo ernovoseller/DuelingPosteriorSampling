@@ -138,7 +138,7 @@ def PSRL(time_horizon, NG_prior_params, env, num_iter, diri_prior = 1,
             # rewards just over entire episodes):
             if env.store_episode_reward:
     
-                rewards[reward_count] = env.get_episode_return()
+                rewards[reward_count] = env.get_trajectory_return()
                 reward_count += 1
                 
         # Call feedback function to update the normal-gamma reward posterior:

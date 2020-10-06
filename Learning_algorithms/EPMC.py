@@ -195,6 +195,12 @@ def sampled_state_action_preference_probs(T1, T2, preference, P_prev):
     S = np.intersect1d(states_T1, states_T2)
     
     n = len(S)     # Number of overlapping states
+
+    # If there are no overlapping states, return the previous probabilities.
+    # This means that the probabilities will not change in the policy 
+    # improvement step.
+    if n == 0:
+        return P_prev
     
     # Values to use as samples:
     sample_vals = [(n + 1) / (2*n), (n - 1) / (2*n)]
@@ -354,13 +360,15 @@ def EPMC(time_horizon, hyper_params, env, num_iter, run_str = '', seed = None):
                 state = next_state
             
             state_sequence[-1] = next_state
-            trajectories.append([state_sequence, action_sequence])  
+            
+            traj = [state_sequence, action_sequence]
+            trajectories.append(traj)  
 
             # Tracking rewards for evaluation purposes (in case of tracking
             # rewards just over entire episodes):
             if env.store_episode_reward:
     
-                rewards[reward_count] = env.get_episode_return()
+                rewards[reward_count] = env.get_trajectory_return(traj)
                 reward_count += 1
             
             # Update list of visited states:
